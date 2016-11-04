@@ -1,0 +1,27 @@
+{
+   "dev": {
+	   "storage": {
+		   "temp": "/tmp",
+		   "path": "/Users/aoliveir/workspace/oneflow/staticache/storage"
+	   },
+	   "server": {   
+	        "host": "0.0.0.0",
+	    	"port": 8080
+	    },
+	    "database": {	    	  
+	    	  "username": "test",
+	    	  "password": "test",
+	    	  "database": "test",
+	    	  "options": {
+	    	  	"host": "localhost",
+	    	  	"dialect": "mysql",
+	    	  	"benchmark": true,	    	  	
+	    	  	"pool": {
+				    "max": 5,
+				    "min": 0,
+				    "idle": 10000
+				  }
+	    	  }	    	  
+	    }
+   }
+}
