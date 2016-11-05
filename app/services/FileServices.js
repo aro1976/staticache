@@ -16,10 +16,10 @@ var mkdir = function(path) {
     }
 }
 
-exports.store = function(origin, meta, reply) {
+exports.store = function(origin, meta, replyStore) {
     const hash = crypto.createHash('sha1');
-    var tmpobj = tmp.fileSync();
-    var file = fs.createWriteStream(tmpobj.toString());
+    let tmpobj = tmp.fileSync({keep:true});
+    let file = fs.createWriteStream(tmpobj.name);
 
     file.on('error', function (err) {
         console.error(err);
@@ -32,27 +32,92 @@ exports.store = function(origin, meta, reply) {
 
     origin.on('end', function (err) {
         var digest = hash.digest('hex');
-
+        console.log("digest",JSON.stringify(tmpobj) ,digest,meta);
 
         mkdir(config.storage.path + "/" + digest.slice(0, 2));
         mkdir(config.storage.path + "/" + digest.slice(0, 2) + "/"+ digest.slice(2, 4));
 
-        var filepath = config.storage.path + "/" + digest.slice(0, 2) + "/"+ digest.slice(2, 4) + "/" + digest.slice(4);
-        console.log("storing at: "+filepath);
-        fs.renameSync(tmpobj.toString(),filepath);
+        db.Archive.findById(digest).then(function(archive) {
+            if (archive) {
+                console.log("this image has already been uploaded");
+                return replyStore(archive);
+            } else {
+                var filepath = config.storage.path + "/" + digest.slice(0, 2) + "/"+ digest.slice(2, 4) + "/" + digest.slice(4);
+                console.log("storing at: "+filepath);
+                fs.renameSync(tmpobj.name,filepath);
 
-        var dimensions = sizeOf(filepath);
-        meta["id"] = digest;
-        meta["size"]   = fs.statSync(filepath)["size"];
-        meta["width"]  = dimensions.width;
-        meta["height"] = dimensions.height;
+                if (meta["content_type"].match(/image\/.*/)) {
+                    var dimensions = sizeOf(filepath);
+                    meta["width"]  = dimensions.width;
+                    meta["height"] = dimensions.height;
+                }
 
-        var archive = db.Archive.create(meta);
+                meta["id"] = digest;
+                meta["size"]   = fs.statSync(filepath)["size"];
 
-        console.log(JSON.stringify(meta));
+                var archive = db.Archive.create(meta);
 
-        reply(meta);
-    })
+                if (meta.scale) {
+                    var scales = meta.scale.split(",");
+                    console.log("scales",scales);
+                    var processed = 0;
+                    meta.derived = [];
+                    delete meta.scale;
 
+                    for (i = 0; i < scales.length; i++) {
+                        console.log("processing image",scales[i]);
+                        var tempMeta = {
+                            path: meta.path,
+                            content_type: meta.content_type,
+                            scale: scales[i]
+                        };
+                        exports.scale(filepath, tempMeta, function(scaledMeta) {
+                            meta.derived.push({
+                                id: scaledMeta.id,
+                                width: scaledMeta.width,
+                                height: scaledMeta.height,
+                                size: scaledMeta.size
+                            });
+                            if (meta.derived.length == scales.length) {
+                                console.log("finished",JSON.stringify(meta));
+                                return replyStore(meta);
+                            }
+                        });
+                    }
+                }
+                else {
+                    console.log("finished",JSON.stringify(meta));
+                    return replyStore(meta);
+                }
+            }
+        })
+        .catch(function(err) {
+            console.error('(archive error ', err);
+            tmpobj.removeCallback();
+            return replyStore();
+        });
+
+    });
     origin.pipe(file);
+};
+
+exports.scale = function (filepath, meta, reply) {
+    console.log("scaling image to", meta.scale);
+
+    var res = meta.scale.match(/(\d{1,4})[x|X](\d{1,4})/);
+    if (res) {
+        delete meta.scale;
+        var tmpresized = tmp.fileSync();
+        sharp(filepath)
+            .resize(parseInt(res[1]), parseInt(res[2]))
+            .toFile(tmpresized.toString(), function(err) {
+                console.log("sharp ",err);
+                exports.store(fs.createReadStream(tmpresized.toString()),meta,function(resized) {
+                    console.log("scaled ",resized);
+                    meta.id = resized.id;
+                    reply(meta);
+                });
+            });
+    }
+    console.log("resolution",res);
 }

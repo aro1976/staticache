@@ -4,22 +4,23 @@
 
 var fileService = require("../services/FileServices");
 
-exports.createFile = function (request, reply) {
+exports.createFile = function (request, replyCreate) {
     var data = request.payload;
 
     if (data.file) {
 
-        console.log("request.params",JSON.stringify(data.file.hapi));
+        console.log(JSON.stringify(request.payload.path));
 
         var meta = {
             "content_type": data.file.hapi.headers["content-type"],
-            "filename": data.file.hapi.filename
+            "path": request.payload.path,
+            "scale": request.payload.scale
         };
 
         console.log("headers ",JSON.stringify(data.file.hapi.headers));
 
         fileService.store(data.file, meta, function (data) {
-            reply(JSON.stringify(data));
+            replyCreate(JSON.stringify(data));
         });
     }
 };

@@ -12,8 +12,8 @@ module.exports = function(sequelize, DataTypes) {
         content_type: {
             type: DataTypes.STRING(100)
         },
-        filename: {
-            type: DataTypes.STRING(100)
+        path: {
+            type: DataTypes.STRING()
         },
         size: {
             type: DataTypes.INTEGER

@@ -2,7 +2,7 @@ const config = require('../conf/config.json')[process.env.NODE_ENV || 'dev'];
 const fileController = require("./controllers/FileController");
 const db = require("./database");
 
-db.sequelize.sync().then(function () {
+db.sequelize.sync({force:true}).then(function () {
     console.log("database initialized");
 });
 
