@@ -16,6 +16,10 @@ var mkdir = function(path) {
     }
 }
 
+exports.convertIdToPath = function(digest) {
+    return config.storage.path + "/" + digest.slice(0, 2) + "/"+ digest.slice(2, 4) + "/" + digest.slice(4);
+};
+
 exports.store = function(origin, meta, replyStore) {
     const hash = crypto.createHash('sha1');
     let tmpobj = tmp.fileSync({keep:true});
@@ -42,7 +46,8 @@ exports.store = function(origin, meta, replyStore) {
                 console.log("this image has already been uploaded");
                 return replyStore(archive);
             } else {
-                var filepath = config.storage.path + "/" + digest.slice(0, 2) + "/"+ digest.slice(2, 4) + "/" + digest.slice(4);
+                var filepath = exports.convertIdToPath(digest);
+
                 console.log("storing at: "+filepath);
                 fs.renameSync(tmpobj.name,filepath);
 
@@ -61,7 +66,7 @@ exports.store = function(origin, meta, replyStore) {
                     var scales = meta.scale.split(",");
                     console.log("scales",scales);
                     var processed = 0;
-                    meta.derived = [];
+                    meta.scaled = [];
                     delete meta.scale;
 
                     for (i = 0; i < scales.length; i++) {
@@ -69,16 +74,17 @@ exports.store = function(origin, meta, replyStore) {
                         var tempMeta = {
                             path: meta.path,
                             content_type: meta.content_type,
-                            scale: scales[i]
+                            scale: scales[i],
+                            original: meta.id
                         };
                         exports.scale(filepath, tempMeta, function(scaledMeta) {
-                            meta.derived.push({
+                            meta.scaled.push({
                                 id: scaledMeta.id,
                                 width: scaledMeta.width,
                                 height: scaledMeta.height,
                                 size: scaledMeta.size
                             });
-                            if (meta.derived.length == scales.length) {
+                            if (meta.scaled.length == scales.length) {
                                 console.log("finished",JSON.stringify(meta));
                                 return replyStore(meta);
                             }
@@ -108,14 +114,17 @@ exports.scale = function (filepath, meta, reply) {
     if (res) {
         delete meta.scale;
         var tmpresized = tmp.fileSync();
+        console.log("scaling to temporary file: ",tmpresized.name);
         sharp(filepath)
-            .resize(parseInt(res[1]), parseInt(res[2]))
-            .toFile(tmpresized.toString(), function(err) {
-                console.log("sharp ",err);
-                exports.store(fs.createReadStream(tmpresized.toString()),meta,function(resized) {
+            .resize(parseInt(res[1]), parseInt(res[2]), {
+                kernel: sharp.kernel.lanczos2,
+                interpolator: sharp.interpolator.nohalo
+            })
+            .toFile(tmpresized.name, function(err) {
+                exports.store(fs.createReadStream(tmpresized.name),meta,function(resized) {
                     console.log("scaled ",resized);
                     meta.id = resized.id;
-                    reply(meta);
+                    return reply(meta);
                 });
             });
     }

@@ -2,31 +2,59 @@
  * Created by aoliveir on 04/11/16.
  */
 
-var fileService = require("../services/FileServices");
+const fs          = require('fs');
+const boom        = require('boom');
+const config      = require('../../conf/config.json')[process.env.NODE_ENV || 'dev'];
+const db          = require('../database');
+const fileService = require("../services/FileService");
 
-exports.createFile = function (request, replyCreate) {
-    var data = request.payload;
 
-    if (data.file) {
+var fileController = {
+    createFile: function (request, replyCreate) {
+        var data = request.payload;
 
-        console.log(JSON.stringify(request.payload.path));
+        if (data.file) {
 
-        var meta = {
-            "content_type": data.file.hapi.headers["content-type"],
-            "path": request.payload.path,
-            "scale": request.payload.scale
-        };
+            console.log(JSON.stringify(request.payload.path));
 
-        console.log("headers ",JSON.stringify(data.file.hapi.headers));
+            var meta = {
+                "content_type": data.file.hapi.headers["content-type"],
+                "path": request.payload.path,
+                "scale": request.payload.scale
+            };
 
-        fileService.store(data.file, meta, function (data) {
-            replyCreate(JSON.stringify(data));
-        });
+            console.log("headers ", JSON.stringify(data.file.hapi.headers));
+
+            fileService.store(data.file, meta, function (data) {
+                replyCreate(JSON.stringify(data));
+            });
+        }
+    },
+    fetchFile: function (request, reply) {
+        console.log("fetching file", request.params.id);
+        db.Archive.findById(request.params.id)
+            .then(function(archive) {
+                console.log("found",JSON.stringify(archive));
+                if (archive) {
+                    let path = fileService.convertIdToPath(archive.id);
+                    console.log("replying", path);
+                    let file = fs.createReadStream(path);
+
+                    reply(file)
+                        .type(archive.content_type)
+                        .etag(archive.id.slice(0,8))
+                        .bytes(archive.size);
+                } else {
+                    console.log("not found");
+                    return reply(boom.notFound());
+                }
+            })
+            .catch(function(err) {
+                console.error('fetching error ', err);
+                return reply(boom.internal("cannot fetch file"));
+            });
     }
 };
 
-exports.fetchFile = function (request, reply) {
-    console.log("get static "+JSON.stringify(request.params));
-    reply();
-}
+module.exports = fileController;
 

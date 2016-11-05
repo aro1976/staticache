@@ -2,7 +2,7 @@ const config = require('../conf/config.json')[process.env.NODE_ENV || 'dev'];
 const fileController = require("./controllers/FileController");
 const db = require("./database");
 
-db.sequelize.sync({force:true}).then(function () {
+db.sequelize.sync().then(function () {
     console.log("database initialized");
 });
 
@@ -24,6 +24,8 @@ var server = new Hapi.Server({
 
 server.connection(config.server);
 
+server.register(require('inert'), () => {});
+
 server.route({
     method: 'POST',
     path: '/static',
@@ -41,14 +43,18 @@ server.route({
 
 server.route({
     method: 'GET',
-    path: '/static/{object_id}',
+    path: '/static/{id}',
     config: {
         validate: {
             params: {
-                object_id: joi.string().length(40)
+                id: joi.string().length(40)
             }
         },
-        handler: fileController.fetchFile
+        handler: fileController.fetchFile,
+        cache: {
+            expiresIn: 365 * 24 * 60 * 60 * 1000,
+            privacy: 'public'
+        }
     }
 });
 

@@ -23,6 +23,9 @@ module.exports = function(sequelize, DataTypes) {
         },
         height:{
             type: DataTypes.INTEGER
+        },
+        original:{
+            type: DataTypes.STRING(40)
         }
     }, {
         timestamps: true,
