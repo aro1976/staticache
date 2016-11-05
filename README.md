@@ -1,7 +1,7 @@
 # staticache
 Is a microservice to help create a central static file store to facilitate caching in browser and cdn.
 
-## Usage
+## Upload
 
 ### Upload a regular file
 Uploads a regular file such as css or javascript
@@ -62,3 +62,10 @@ the response will be something similar to:
 }
 ```
 
+## Download
+
+Use regular http get such as:
+
+```
+curl http://localhost:8080/static/c7ffcc4f56cfbbf8887b9424c7c4923d3d7e90aa
+```

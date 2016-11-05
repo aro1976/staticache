@@ -2,6 +2,7 @@
   "name": "staticache",
   "version": "0.0.1",
   "description": "Service to store images cdn friendly",
+  "repository": "https://github.com/aro1976/staticache.git",
   "main": "app/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
