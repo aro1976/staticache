@@ -84,6 +84,7 @@ exports.store = function(origin, meta, replyStore) {
                                         });
                                         if (meta.scaled.length == scales.length) {
                                             console.log("finished",JSON.stringify(meta));
+                                            var archive = db.Archive.create(meta);
                                             return replyStore(meta);
                                         }
                                     });
@@ -119,10 +120,9 @@ exports.scale = function (filepath, meta, reply) {
         var tmpresized = tmp.fileSync();
         console.log("scaling to temporary file: ",tmpresized.name);
         sharp(filepath)
-            .resize(parseInt(res[1]), parseInt(res[2]), {
-                kernel: sharp.kernel.lanczos2,
-                interpolator: sharp.interpolator.nohalo
-            })
+            .resize(parseInt(res[1]), parseInt(res[2]))
+            .quality(100)
+            .blur(0.4)
             .toFile(tmpresized.name, function(err) {
                 exports.store(fs.createReadStream(tmpresized.name),meta,function(resized) {
                     console.log("scaled ",resized);

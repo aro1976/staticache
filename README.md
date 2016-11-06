@@ -62,7 +62,11 @@ the response will be something similar to:
 }
 ```
 
-## Download
+## Upload using command line tool
+We created a simple command line tool that can be used to batch upload files
+
+
+# Download
 
 Use regular http get such as:
 
