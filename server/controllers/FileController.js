@@ -20,8 +20,11 @@ var fileController = {
             var meta = {
                 "content_type": data.file.hapi.headers["content-type"],
                 "path": request.payload.path,
-                "scale": request.payload.scale
             };
+
+            if (request.payload.scale) {
+                meta["scale"]= request.payload.scale
+            }
 
             console.log("headers: ", JSON.stringify(data.file.hapi.headers));
 

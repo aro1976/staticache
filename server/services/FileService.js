@@ -35,7 +35,7 @@ exports.store = function(origin, meta, replyStore) {
 
     origin.on('end', function (err) {
         var digest = hash.digest('hex');
-        console.log("digest",JSON.stringify(tmpobj) ,digest,meta);
+        console.log("digest",JSON.stringify(tmpobj) ,digest, meta);
 
         mkdir(config.storage.path + "/" + digest.slice(0, 2));
         mkdir(config.storage.path + "/" + digest.slice(0, 2) + "/"+ digest.slice(2, 4));
@@ -88,14 +88,15 @@ exports.store = function(origin, meta, replyStore) {
                                         }
                                     });
                                 }
-                                var archive = db.Archive.create(meta);
-                            }
-                            else {
-                                console.log("finished",JSON.stringify(meta));
+                            } else {
                                 var archive = db.Archive.create(meta);
                                 return replyStore(meta);
                             }
                         });
+                } else {
+                    console.log("finished",JSON.stringify(meta));
+                    var archive = db.Archive.create(meta);
+                    return replyStore(meta);
                 }
             }
         })
