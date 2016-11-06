@@ -11,7 +11,7 @@ var gulp = require('gulp'),
  */
 gulp.task('server', function() {
   if (node) node.kill()
-  node = spawn('node', ['./app/app.js'], {stdio: 'inherit'})
+  node = spawn('node', ['./server/app.js'], {stdio: 'inherit'})
   node.on('close', function (code) {
     if (code === 8) {
       gulp.log('Error detected, waiting for changes...');
@@ -26,7 +26,7 @@ gulp.task('server', function() {
 gulp.task('default', function() {
   gulp.run('server')
 
-  gulp.watch(['./conf/dev.js', './app/**/*.js'], function() {
+  gulp.watch(['./conf/config.json', './server/**/*.js'], function() {
     gulp.run('server')
   })
   

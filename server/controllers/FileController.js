@@ -15,7 +15,7 @@ var fileController = {
 
         if (data.file) {
 
-            console.log(JSON.stringify(request.payload.path));
+            console.log("path: ",JSON.stringify(request.payload.path));
 
             var meta = {
                 "content_type": data.file.hapi.headers["content-type"],
@@ -23,10 +23,11 @@ var fileController = {
                 "scale": request.payload.scale
             };
 
-            console.log("headers ", JSON.stringify(data.file.hapi.headers));
+            console.log("headers: ", JSON.stringify(data.file.hapi.headers));
 
             fileService.store(data.file, meta, function (data) {
-                replyCreate(JSON.stringify(data));
+                replyCreate(data)
+                    .type('application/json');
             });
         }
     },

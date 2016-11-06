@@ -24,8 +24,6 @@ var server = new Hapi.Server({
 
 server.connection(config.server);
 
-server.register(require('inert'), () => {});
-
 server.route({
     method: 'POST',
     path: '/static',
@@ -34,7 +32,8 @@ server.route({
         payload: {
             output: 'stream',
             parse: true,
-            allow: 'multipart/form-data'
+            allow: 'multipart/form-data',
+            maxBytes: 10 * 1048576
         },
 
         handler: fileController.createFile

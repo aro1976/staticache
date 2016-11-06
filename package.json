@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "description": "Service to store images cdn friendly",
   "repository": "https://github.com/aro1976/staticache.git",
-  "main": "app/app.js",
+  "bin": {
+    "staticache": "./client/index.js"
+  },
+  "main": "server/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,12 +15,14 @@
   "dependencies": {
     "boom": "^4.2.0",
     "hapi": "^15.2.0",
-    "image-size": "^0.5.0",
-    "inert": "^4.0.2",
     "joi": "^9.2.0",
     "mysql": "^2.12.0",
     "sequelize": "^3.24.8",
     "sharp": "^0.16.2",
-    "tmp": "0.0.30"
+    "tmp": "0.0.30",
+    "commander": "^2.9.0",
+    "restling": "^0.9.1",
+    "superagent": "^2.3.0",
+    "superagent-throttle": "^0.2.1"
   }
 }

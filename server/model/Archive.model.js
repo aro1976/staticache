@@ -30,7 +30,21 @@ module.exports = function(sequelize, DataTypes) {
     }, {
         timestamps: true,
         underscored: true,
-        tableName: "archive"
+        tableName: "archive",
+        instanceMethods: {
+            toJSON: function() {
+                var json = {
+                    id: this.id,
+                    content_type: this.content_type,
+                    path: this.path,
+                    size: this.size
+                };
+                if (this.width>0) { json.width = this.width };
+                if (this.height>0) { json.height = this.height };
+                if (this.original) { json.original = this.original };
+                return json;
+            }
+        }
     });
 
     return model;

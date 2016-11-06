@@ -4,7 +4,6 @@
 const crypto = require('crypto');
 const tmp    = require('tmp');
 const fs     = require('fs');
-const sizeOf = require('image-size');
 const sharp  = require('sharp');
 
 const config = require('../../conf/config.json')[process.env.NODE_ENV || 'dev'];
@@ -44,56 +43,59 @@ exports.store = function(origin, meta, replyStore) {
         db.Archive.findById(digest).then(function(archive) {
             if (archive) {
                 console.log("this image has already been uploaded");
-                return replyStore(archive);
+                return replyStore(archive.toJSON());
             } else {
                 var filepath = exports.convertIdToPath(digest);
 
                 console.log("storing at: "+filepath);
                 fs.renameSync(tmpobj.name,filepath);
 
-                if (meta["content_type"].match(/image\/.*/)) {
-                    var dimensions = sizeOf(filepath);
-                    meta["width"]  = dimensions.width;
-                    meta["height"] = dimensions.height;
-                }
-
-                meta["id"] = digest;
+                meta["id"]     = digest;
                 meta["size"]   = fs.statSync(filepath)["size"];
 
-                var archive = db.Archive.create(meta);
+                if (meta["content_type"].match(/image\/.*/)) {
+                    sharp(filepath)
+                        .metadata()
+                        .then(function(metadata) {
+                            meta["width"]  = metadata.width;
+                            meta["height"] = metadata.height;
 
-                if (meta.scale) {
-                    var scales = meta.scale.split(",");
-                    console.log("scales",scales);
-                    var processed = 0;
-                    meta.scaled = [];
-                    delete meta.scale;
+                            if (meta.scale && meta.width) {
+                                var scales = meta.scale.split(",");
+                                console.log("scales",scales);
+                                var processed = 0;
+                                meta.scaled = [];
+                                delete meta.scale;
 
-                    for (i = 0; i < scales.length; i++) {
-                        console.log("processing image",scales[i]);
-                        var tempMeta = {
-                            path: meta.path,
-                            content_type: meta.content_type,
-                            scale: scales[i],
-                            original: meta.id
-                        };
-                        exports.scale(filepath, tempMeta, function(scaledMeta) {
-                            meta.scaled.push({
-                                id: scaledMeta.id,
-                                width: scaledMeta.width,
-                                height: scaledMeta.height,
-                                size: scaledMeta.size
-                            });
-                            if (meta.scaled.length == scales.length) {
+                                for (i = 0; i < scales.length; i++) {
+                                    console.log("processing image",scales[i]);
+                                    var tempMeta = {
+                                        path: meta.path,
+                                        content_type: meta.content_type,
+                                        scale: scales[i],
+                                        original: meta.id
+                                    };
+                                    exports.scale(filepath, tempMeta, function(scaledMeta) {
+                                        meta.scaled.push({
+                                            id: scaledMeta.id,
+                                            width: scaledMeta.width,
+                                            height: scaledMeta.height,
+                                            size: scaledMeta.size
+                                        });
+                                        if (meta.scaled.length == scales.length) {
+                                            console.log("finished",JSON.stringify(meta));
+                                            return replyStore(meta);
+                                        }
+                                    });
+                                }
+                                var archive = db.Archive.create(meta);
+                            }
+                            else {
                                 console.log("finished",JSON.stringify(meta));
+                                var archive = db.Archive.create(meta);
                                 return replyStore(meta);
                             }
                         });
-                    }
-                }
-                else {
-                    console.log("finished",JSON.stringify(meta));
-                    return replyStore(meta);
                 }
             }
         })
