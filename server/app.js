@@ -26,7 +26,7 @@ server.connection(config.server);
 
 server.route({
     method: 'POST',
-    path: '/static',
+    path: '/cache',
     config: {
 
         payload: {
@@ -42,7 +42,7 @@ server.route({
 
 server.route({
     method: 'GET',
-    path: '/static/{id}',
+    path: '/cache/{id}',
     config: {
         validate: {
             params: {
@@ -54,6 +54,23 @@ server.route({
             expiresIn: 365 * 24 * 60 * 60 * 1000,
             privacy: 'public'
         }
+    }
+});
+
+server.route({
+    method: 'GET',
+    path: '/static/{path*}',
+    config: {
+        validate: {
+            params: {
+                path: joi.any()
+
+            },
+            query: {
+                scale: joi.string().optional().regex(/(\d{1,4})[x|X](\d{1,4})/)
+            }
+        },
+        handler: fileController.searchAndRedirect,
     }
 });
 

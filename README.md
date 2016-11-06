@@ -1,15 +1,40 @@
 # staticache
 Is a microservice to help create a central static file store to facilitate caching in browser and cdn.
 
+## Install
+
+### Install Server
+
+Run the following in order to install the server
+``` bash
+$ npm install 
+$ npm start
+```
+
+### Install Client
+
+Run the following in order to install the command line interface
+``` bash
+$ npm install -g 
+```
+
+### Install Samples
+
+``` bash
+$ staticache --resize 160x160,320x320 samples
+$ open http://localhost:8080/static/samples/index.html
+```
+
 ## Upload
 
 ### Upload a regular file
+
 Uploads a regular file such as css or javascript
 
 ``` bash
 $ curl --form file=@samples/bootstrap.css    \
        --form path=samples/bootstrap.css  \
-              http://localhost:8080/static
+              http://localhost:8080/cache
 ```
 
 ```json
@@ -30,7 +55,7 @@ Whenever you upload an image, it is possible to generate scaled versions automat
 $ curl --form file=@samples/image.jpg     \
        --form path=samples/image.jpg      \
        --form scale=120x120,240x240,450x450
-              http://localhost:8080/static
+              http://localhost:8080/cache
 ```
 the response will be something similar to:
 ```json
@@ -68,8 +93,18 @@ We created a simple command line tool that can be used to batch upload files
 
 # Download
 
+## Using caching interface
 Use regular http get such as:
 
 ```
-curl http://localhost:8080/static/c7ffcc4f56cfbbf8887b9424c7c4923d3d7e90aa
+curl http://localhost:8080/cache/c7ffcc4f56cfbbf8887b9424c7c4923d3d7e90aa
+```
+## Using static path
+
+```
+curl http://localhost:8080/static/samples/49620.jpg
+```
+optionally you can specify the **scale** parameter in order to retrieve a particular size.
+```
+curl http://localhost:8080/static/samples/49620.jpg?scale=120x120
 ```

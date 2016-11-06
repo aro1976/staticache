@@ -90,6 +90,7 @@ exports.store = function(origin, meta, replyStore) {
                                     });
                                 }
                             } else {
+                                console.log("finished",JSON.stringify(meta));
                                 var archive = db.Archive.create(meta);
                                 return replyStore(meta);
                             }
@@ -126,6 +127,7 @@ exports.scale = function (filepath, meta, reply) {
             .toFile(tmpresized.name, function(err) {
                 exports.store(fs.createReadStream(tmpresized.name),meta,function(resized) {
                     console.log("scaled ",resized);
+                    tmpresized.removeCallback();
                     meta.id = resized.id;
                     return reply(meta);
                 });

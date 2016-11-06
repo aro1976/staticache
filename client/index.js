@@ -15,7 +15,7 @@ let throttle = new Throttle({
 function uploadFile(program, file, path) {
 
     var req = request
-        .post(program.server+'/static')
+        .post(program.server+'/cache')
         .use(throttle.plugin())
         .set('Accept', 'application/json')
         .attach('file', file)

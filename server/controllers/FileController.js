@@ -57,6 +57,36 @@ var fileController = {
                 console.error('fetching error ', err);
                 return reply(boom.internal("cannot fetch file"));
             });
+    },
+    searchAndRedirect: function (request, reply) {
+        console.log("searching file", request.params.path, request.query.scale);
+        var whereClause = {
+            where: {
+                path: request.params.path,
+            }
+        };
+        if (typeof request.query.scale !== 'undefined') {
+            var res = request.query.scale.match(/(\d{1,4})[x|X](\d{1,4})/);
+            whereClause.where["width"]=res[1];
+            whereClause.where["height"]=res[2];
+        } else {
+            whereClause.where["original"]=null;
+        }
+        db.Archive.findOne(whereClause)
+            .then(function(archive) {
+                console.log("found",JSON.stringify(archive));
+                if (archive) {
+                    reply()
+                        .redirect("/cache/"+archive.id);
+                } else {
+                    console.log("not found");
+                    return reply(boom.notFound());
+                }
+            })
+            .catch(function(err) {
+                console.error('fetching error ', err);
+                return reply(boom.internal("cannot fetch file"));
+            });
     }
 };
 
