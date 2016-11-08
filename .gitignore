@@ -6,3 +6,4 @@ node_modules
 .tern-project
 .settings
 storage
+npm-debug.log
