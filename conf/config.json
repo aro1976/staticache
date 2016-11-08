@@ -8,12 +8,9 @@
 	        "host": "0.0.0.0",
 	    	"port": 8080
 	    },
-	    "database": {	    	  
-	    	  "username": "test",
-	    	  "password": "test",
-	    	  "database": "test",
+	    "database": {
+			  "connection": "mysql://test:test@localhost:3306/test",
 	    	  "options": {
-	    	  	"host": "localhost",
 	    	  	"dialect": "mysql",
 	    	  	"benchmark": true,	    	  	
 	    	  	"pool": {
@@ -23,5 +20,26 @@
 				  }
 	    	  }	    	  
 	    }
-   }
+   },
+	"prod": {
+		"storage": {
+			"temp": "/tmp",
+			"path": "/var/lib/staticache"
+		},
+		"server": {
+			"host": "0.0.0.0",
+			"port": 8080
+		},
+		"database": {
+			"connection": "mysql://test:test@localhost:3306/test",
+			"options": {
+				"dialect": "mysql",
+				"pool": {
+					"max": 20,
+					"min": 5,
+					"idle": 10000
+				}
+			}
+		}
+	}
 }

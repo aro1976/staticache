@@ -5,11 +5,13 @@
 var config	= require('../conf/config.json')[process.env.NODE_ENV || 'dev'];
 var Sequelize = require('sequelize');
 
+if (process.env.STATICACHE_DB) {
+    config.database.connection = process.env.STATICACHE_DB;
+}
+
 var db = {
     sequelize: new Sequelize(
-        config.database.database,
-        config.database.username,
-        config.database.password,
+        config.database.connection,
         config.database.options)
 };
 
