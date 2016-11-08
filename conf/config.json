@@ -23,8 +23,8 @@
    },
 	"prod": {
 		"storage": {
-			"temp": "/tmp",
-			"path": "/var/lib/staticache"
+			"temp": "/var/lib/staticache/tmp",
+			"path": "/var/lib/staticache/data"
 		},
 		"server": {
 			"host": "0.0.0.0",

@@ -96,15 +96,42 @@ We created a simple command line tool that can be used to batch upload files
 ## Using caching interface
 Use regular http get such as:
 
-```
+``` bash
 curl http://localhost:8080/cache/c7ffcc4f56cfbbf8887b9424c7c4923d3d7e90aa
 ```
 ## Using static path
 
-```
+``` bash
 curl http://localhost:8080/static/samples/49620.jpg
 ```
 optionally you can specify the **scale** parameter in order to retrieve a particular size.
-```
+``` bash
 curl http://localhost:8080/static/samples/49620.jpg?scale=120x120
 ```
+
+# Docker
+
+## Package 
+
+``` bash
+$ docker build -t dynamicflow/staticache .
+
+$ docker volume create  --name staticache-data
+
+$ docker run -i --add-host=mysql-server:10.43.89.153 --name staticache \
+    --env "STATICACHE_DB=mysql://test:test@mysql-server:3306/test" \
+    -v staticache-data:/var/lib/statiche \
+    -p 8080:8080 \
+    -t dynamicflow/staticache \ 
+```
+
+## Remove 
+
+``` bash
+$ docker stop staticache
+
+$ docker rm staticache
+
+```
+
+ 

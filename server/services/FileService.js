@@ -21,7 +21,7 @@ exports.convertIdToPath = function(digest) {
 
 exports.store = function(origin, meta, replyStore) {
     const hash = crypto.createHash('sha1');
-    let tmpobj = tmp.fileSync({keep:true});
+    let tmpobj = tmp.fileSync({keep:true,dir:config.storage.temp});
     let file = fs.createWriteStream(tmpobj.name);
 
     file.on('error', function (err) {
@@ -118,7 +118,7 @@ exports.scale = function (filepath, meta, reply) {
     var res = meta.scale.match(/(\d{1,4})[x|X](\d{1,4})/);
     if (res) {
         delete meta.scale;
-        var tmpresized = tmp.fileSync();
+        var tmpresized = tmp.fileSync({dir:config.storage.temp});
         console.log("scaling to temporary file: ",tmpresized.name);
         sharp(filepath)
             .resize(parseInt(res[1]), parseInt(res[2]))
