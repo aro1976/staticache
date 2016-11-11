@@ -2,7 +2,7 @@
    "dev": {
 	   "storage": {
 		   "temp": "/tmp",
-		   "path": "/Users/aoliveir/workspace/oneflow/staticache/storage"
+		   "data": "/Users/aoliveir/workspace/oneflow/staticache/storage"
 	   },
 	   "server": {   
 	        "host": "0.0.0.0",
@@ -19,12 +19,21 @@
 				    "idle": 10000
 				  }
 	    	  }	    	  
-	    }
+	    },
+	   "log4js": {
+		   "appenders": [
+			   {
+				   "type": "console"
+
+			   }
+		   ],
+		   "replaceConsole": true
+	   }
    },
 	"prod": {
 		"storage": {
 			"temp": "/var/lib/staticache/tmp",
-			"path": "/var/lib/staticache/data"
+			"data": "/var/lib/staticache/data"
 		},
 		"server": {
 			"host": "0.0.0.0",
@@ -40,6 +49,15 @@
 					"idle": 10000
 				}
 			}
+		},
+		"log4js": {
+			"appenders": [
+				{
+					"type": "console"
+
+				}
+			],
+			"replaceConsole": true
 		}
 	}
 }

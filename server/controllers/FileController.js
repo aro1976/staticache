@@ -7,7 +7,8 @@ const boom        = require('boom');
 const config      = require('../../conf/config.json')[process.env.NODE_ENV || 'dev'];
 const db          = require('../database');
 const fileService = require("../services/FileService");
-
+const log4js      = require('log4js');
+const logger      = log4js.getLogger("FileController");
 
 var fileController = {
     createFile: function (request, replyCreate) {
@@ -15,7 +16,7 @@ var fileController = {
 
         if (data.file) {
 
-            console.log("path: ",JSON.stringify(request.payload.path));
+            logger.info("path: ",JSON.stringify(request.payload.path));
 
             var meta = {
                 "content_type": data.file.hapi.headers["content-type"],
@@ -26,7 +27,7 @@ var fileController = {
                 meta["scale"]= request.payload.scale
             }
 
-            console.log("headers: ", JSON.stringify(data.file.hapi.headers));
+            logger.info("headers: ", JSON.stringify(data.file.hapi.headers));
 
             fileService.store(data.file, meta, function (data) {
                 replyCreate(data)
@@ -35,13 +36,13 @@ var fileController = {
         }
     },
     fetchFile: function (request, reply) {
-        console.log("fetching file", request.params.id);
+        logger.info("fetching file", request.params.id);
         db.Archive.findById(request.params.id)
             .then(function(archive) {
-                console.log("found",JSON.stringify(archive));
+                logger.debug("found",JSON.stringify(archive));
                 if (archive) {
                     let path = fileService.convertIdToPath(archive.id);
-                    console.log("replying", path);
+                    logger.debug("replying", path);
                     let file = fs.createReadStream(path);
 
                     reply(file)
@@ -49,17 +50,17 @@ var fileController = {
                         .etag(archive.id.slice(0,8))
                         .bytes(archive.size);
                 } else {
-                    console.log("not found");
+                    logger.info("not found");
                     return reply(boom.notFound());
                 }
             })
             .catch(function(err) {
-                console.error('fetching error ', err);
+                logger.error('fetching error ', err);
                 return reply(boom.internal("cannot fetch file"));
             });
     },
     searchAndRedirect: function (request, reply) {
-        console.log("searching file", request.params.path, request.query.scale);
+        logger.info("searching file", request.params.path, request.query.scale);
         var whereClause = {
             where: {
                 path: request.params.path,
@@ -74,17 +75,17 @@ var fileController = {
         }
         db.Archive.findOne(whereClause)
             .then(function(archive) {
-                console.log("found",JSON.stringify(archive));
+                logger.debug("found",JSON.stringify(archive));
                 if (archive) {
                     reply()
                         .redirect("/cache/"+archive.id);
                 } else {
-                    console.log("not found");
+                    logger.error("not found");
                     return reply(boom.notFound());
                 }
             })
             .catch(function(err) {
-                console.error('fetching error ', err);
+                logger.error('fetching error ', err);
                 return reply(boom.internal("cannot fetch file"));
             });
     }

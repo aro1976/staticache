@@ -118,11 +118,11 @@ $ docker build -t dynamicflow/staticache .
 
 $ docker volume create  --name staticache-data
 
-$ docker run -i --add-host=mysql-server:10.43.89.153 --name staticache \
+$ docker run -i --add-host=mysql-server:10.0.1.17 --name staticache \
     --env "STATICACHE_DB=mysql://test:test@mysql-server:3306/test" \
-    -v staticache-data:/var/lib/statiche \
+    -v staticache-data:/var/lib/staticache \
     -p 8080:8080 \
-    -t dynamicflow/staticache \ 
+    -t dynamicflow/staticache 
 ```
 
 ## Remove 
@@ -134,4 +134,8 @@ $ docker rm staticache
 
 ```
 
- 
+docker run -i --name staticache \
+    --env "STATICACHE_DB=mysql://gateway:6cw-mkv-78q-63z@iot-dev-db.cqj0hjperufd.us-east-1.rds.amazonaws.com:3306/oneflow" \
+    -v staticache-data:/var/lib/staticache \
+    -p 8080:8080 \
+    -t dynamicflow/staticache 

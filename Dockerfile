@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:16.04
 MAINTAINER Alessandro Oliveira <alessandro@dynamicflow.com.br>
 RUN apt-get update && apt-get install -y curl
 RUN curl -sL https://deb.nodesource.com/setup_6.x -o nodesource_setup.sh && bash nodesource_setup.sh && rm nodesource_setup.sh
@@ -14,6 +14,4 @@ WORKDIR $STATICACHE_BIN
 RUN npm install
 EXPOSE 8080
 VOLUME [ $STATICACHE_VAR ]
-RUN mkdir -p $STATICACHE_VAR/data
-RUN mkdir -p $STATICACHE_VAR/tmp
 CMD node server/app.js

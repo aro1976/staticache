@@ -1,11 +1,20 @@
 const config = require('../conf/config.json')[process.env.NODE_ENV || 'dev'];
 const fileController = require("./controllers/FileController");
+const fileService = require("./services/FileService");
 const db = require("./database");
+const log4js = require('log4js');
+
+log4js.configure(config.log4js);
+const logger = log4js.getLogger("Main");
+
+logger.info("starting");
 
 db.sequelize.sync().then(function () {
-    console.log("database initialized");
+    logger.info("database initialized");
 });
 
+fileService.mkdir(config.storage.temp);
+fileService.mkdir(config.storage.data);
 
 const Hapi   = require('hapi');
 const joi    = require('joi');
@@ -75,6 +84,6 @@ server.route({
 });
 
 server.start(function () {
-    console.log('info', 'Server running at: ' + server.info.uri);
+    logger.info('info', 'Server running at: ' + server.info.uri);
 });
 
