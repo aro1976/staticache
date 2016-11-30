@@ -3,6 +3,7 @@
  */
 const crypto = require('crypto');
 const tmp    = require('tmp');
+const boom   = require('boom');
 const fs     = require('fs');
 const sharp  = require('sharp');
 const log4js = require('log4js');
@@ -45,8 +46,13 @@ exports.store = function(origin, meta, replyStore) {
 
         db.Archive.findById(digest).then(function(archive) {
             if (archive) {
-                logger.info("this image has already been uploaded");
-                return replyStore(archive.toJSON());
+                if (meta.path==archive.path) {
+                    logger.info("skipping, already uploaded "+archive.path);
+                    return replyStore(boom.badRequest("skipping, already uploaded "+archive.path));
+                } else {
+                    logger.info("duplicated from "+archive.path);
+                    return replyStore(boom.notAcceptable("duplicated from "+archive.path));
+                }
             } else {
                 var filepath = exports.convertIdToPath(digest);
 
@@ -56,7 +62,7 @@ exports.store = function(origin, meta, replyStore) {
                 meta["id"]     = digest;
                 meta["size"]   = fs.statSync(filepath)["size"];
 
-                if (meta["content_type"].match(/image\/.*/)) {
+                if (meta["content_type"].match(/image\/(jpeg|gif|tiff|png)/)) {
                     sharp(filepath)
                         .metadata()
                         .then(function(metadata) {
@@ -97,18 +103,28 @@ exports.store = function(origin, meta, replyStore) {
                                 var archive = db.Archive.create(meta);
                                 return replyStore(meta);
                             }
+                        })
+                        .catch(function(err){
+                            logger.error('cannot identify image metadata from',digest,err);
+                            return replyStore(boom.badData('cannot identify image metadata from',err));
                         });
                 } else {
                     logger.info("finished",JSON.stringify(meta));
-                    var archive = db.Archive.create(meta);
-                    return replyStore(meta);
+                    var archive = db.Archive.create(meta)
+                        .then(function() {
+                            return replyStore(meta);
+                        })
+                        .catch(function(err) {
+                            logger.error("fail to insert",digest,err)
+                            return replyStore(boom.internal('fail to insert',err));
+                        });
                 }
             }
         })
         .catch(function(err) {
-            logger.error('(archive error ', err);
+            logger.error('archive error', err);
             tmpobj.removeCallback();
-            return replyStore();
+            return replyStore(boom.internal('archive error',err));
         });
 
     });
