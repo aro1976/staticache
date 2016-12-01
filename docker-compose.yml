@@ -12,6 +12,9 @@ services:
       - db
     links:
       - db:mysql
+    networks:
+      - front-tier
+      - back-tier
 
   db: 
     image: "mysql:5.7.13"
@@ -23,6 +26,8 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=statipass
       - MYSQL_DATABASE=staticache  
+    networks:
+      - back-tier
 
 volumes:
   db-data:
@@ -32,3 +37,8 @@ volumes:
     external:
       name: staticache-storage-data
 
+networks:
+  front-tier:
+    driver: bridge
+  back-tier:
+    driver: bridge
