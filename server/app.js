@@ -1,5 +1,6 @@
 const config = require('../conf/config.json')[process.env.NODE_ENV || 'dev'];
 const fileController = require("./controllers/FileController");
+const checkController = require("./controllers/CheckController");
 const fileService = require("./services/FileService");
 const db = require("./database");
 const log4js = require('log4js');
@@ -18,7 +19,6 @@ fileService.mkdir(config.storage.data);
 
 const Hapi   = require('hapi');
 const joi    = require('joi');
-
 
 var server = new Hapi.Server({
     debug : {
@@ -80,6 +80,14 @@ server.route({
             }
         },
         handler: fileController.searchAndRedirect,
+    }
+});
+
+server.route({
+    method: 'GET',
+    path: '/check',
+    config: {
+        handler: checkController.check
     }
 });
 
