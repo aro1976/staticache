@@ -27,6 +27,7 @@ exports.store = function(origin, meta, replyStore) {
     const hash = crypto.createHash('sha1');
     let tmpobj = tmp.fileSync({keep:true,dir:config.storage.temp});
     let file = fs.createWriteStream(tmpobj.name);
+    let size = 0;
 
     file.on('error', function (err) {
         console.error(err);
@@ -35,124 +36,55 @@ exports.store = function(origin, meta, replyStore) {
 
     origin.on('data', function(data) {
         hash.update(data);
+        size+=data.length;
     });
 
     origin.on('end', function (err) {
-        var digest = hash.digest('hex');
-        logger.info("store",JSON.stringify(tmpobj) ,digest, meta);
+        meta['id'] = hash.digest('hex');
+        meta["size"] = size;
 
-        mkdir(config.storage.data + "/" + digest.slice(0, 2));
-        mkdir(config.storage.data + "/" + digest.slice(0, 2) + "/"+ digest.slice(2, 4));
+        db.FileData.findOrCreate({
+            where: {
+                id: meta['id']
+            },
+            defaults: meta
+        }).spread(function (fileData, created) {
+            if (created) {
+                mkdir(config.storage.data + "/" + meta['id'].slice(0, 2));
+                mkdir(config.storage.data + "/" + meta['id'].slice(0, 2) + "/" + meta['id'].slice(2, 4));
 
-        db.Archive.findById(digest).then(function(archive) {
-            if (archive) {
-                if (meta.path==archive.path) {
-                    logger.info("skipping, already uploaded "+archive.path);
-                    return replyStore(boom.badRequest("skipping, already uploaded "+archive.path));
-                } else {
-                    logger.info("duplicated from "+archive.path);
-                    return replyStore(boom.notAcceptable("duplicated from "+archive.path));
-                }
+                var filepath = exports.convertIdToPath(meta['id']);
+                logger.debug("storing at: " + filepath);
+                fs.renameSync(tmpobj.name, filepath);
             } else {
-                var filepath = exports.convertIdToPath(digest);
-
-                logger.debug("storing at: "+filepath);
-                fs.renameSync(tmpobj.name,filepath);
-
-                meta["id"]     = digest;
-                meta["size"]   = fs.statSync(filepath)["size"];
-
-                if (meta["content_type"].match(/image\/(jpeg|gif|tiff|png)/)) {
-                    sharp(filepath)
-                        .metadata()
-                        .then(function(metadata) {
-                            meta["width"]  = metadata.width;
-                            meta["height"] = metadata.height;
-
-                            if (meta.scale && meta.width) {
-                                var scales = meta.scale.split(",");
-                                logger.debug("scales",scales);
-                                var processed = 0;
-                                meta.scaled = [];
-                                delete meta.scale;
-
-                                for (i = 0; i < scales.length; i++) {
-                                    logger.debug("processing image",scales[i]);
-                                    var tempMeta = {
-                                        path: meta.path,
-                                        content_type: meta.content_type,
-                                        scale: scales[i],
-                                        original: meta.id
-                                    };
-                                    exports.scale(filepath, tempMeta, function(scaledMeta) {
-                                        meta.scaled.push({
-                                            id: scaledMeta.id,
-                                            width: scaledMeta.width,
-                                            height: scaledMeta.height,
-                                            size: scaledMeta.size
-                                        });
-                                        if (meta.scaled.length == scales.length) {
-                                            logger.info("finished",JSON.stringify(meta));
-                                            var archive = db.Archive.create(meta);
-                                            return replyStore(meta);
-                                        }
-                                    });
-                                }
-                            } else {
-                                logger.info("finished",JSON.stringify(meta));
-                                var archive = db.Archive.create(meta);
-                                return replyStore(meta);
-                            }
-                        })
-                        .catch(function(err){
-                            logger.error('cannot identify image metadata from',digest,err);
-                            return replyStore(boom.badData('cannot identify image metadata from',err));
-                        });
-                } else {
-                    logger.info("finished",JSON.stringify(meta));
-                    var archive = db.Archive.create(meta)
-                        .then(function() {
-                            return replyStore(meta);
-                        })
-                        .catch(function(err) {
-                            logger.error("fail to insert",digest,err)
-                            return replyStore(boom.internal('fail to insert',err));
-                        });
-                }
+                logger.debug(meta['id'] + " already exists, skipping");
             }
-        })
-        .catch(function(err) {
-            logger.error('archive error', err);
-            tmpobj.removeCallback();
-            return replyStore(boom.internal('archive error',err));
-        });
 
+            db.FilePath.findOrCreate({
+                where: {
+                    path: meta['path']
+                }
+            }).spread(function (filePath, created) {
+                if (!created) {
+                    filePath.getFileData().then(function (fdatas) {
+                        fdatas.forEach(function (f) {
+                            if (f.id !== fileData.id) {
+                                logger.debug("removing %s, from %s", f.id, filePath.id);
+                                filePath.removeFileData(f);
+                            }
+                        });
+                    });
+                }
+                logger.debug("associating: %s to %s", filePath.path, fileData.id);
+                filePath.addFileData(fileData);
+
+                return replyStore(meta);
+            });
+
+        });
     });
+
     origin.pipe(file);
 };
-
-exports.scale = function (filepath, meta, reply) {
-    logger.info("scaling image to", meta.scale);
-
-    var res = meta.scale.match(/(\d{1,4})[x|X](\d{1,4})/);
-    if (res) {
-        delete meta.scale;
-        var tmpresized = tmp.fileSync({dir:config.storage.temp});
-        logger.debug("scaling to temporary file: ",tmpresized.name);
-        sharp(filepath)
-            .resize(parseInt(res[1]), parseInt(res[2]))
-            .quality(100)
-            .blur(0.4)
-            .toFile(tmpresized.name, function(err) {
-                exports.store(fs.createReadStream(tmpresized.name),meta,function(resized) {
-                    logger.debug("scaled ",resized);
-                    tmpresized.removeCallback();
-                    meta.id = resized.id;
-                    return reply(meta);
-                });
-            });
-    }
-    logger.debug("resolution",res);
-}
 
 exports.mkdir = mkdir;

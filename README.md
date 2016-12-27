@@ -31,6 +31,8 @@ $ open http://localhost:8080/static/samples/index.html
 
 Uploads a regular file such as css or javascript
 
+curl --form file=@samples/index.html --form path=samples/index.html  http://localhost:8080/cache
+              
 ``` bash
 $ curl --form file=@samples/bootstrap.css    \
        --form path=samples/bootstrap.css  \

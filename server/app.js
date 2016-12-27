@@ -42,7 +42,7 @@ server.route({
             output: 'stream',
             parse: true,
             allow: 'multipart/form-data',
-            maxBytes: 10 * 1048576
+            maxBytes: 50 * 1048576
         },
 
         handler: fileController.createFile
@@ -74,9 +74,6 @@ server.route({
             params: {
                 path: joi.any()
 
-            },
-            query: {
-                scale: joi.string().optional().regex(/(\d{1,4})[x|X](\d{1,4})/)
             }
         },
         handler: fileController.searchAndRedirect,

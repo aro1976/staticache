@@ -4,16 +4,13 @@
 'use strict';
 
 module.exports = function(sequelize, DataTypes) {
-    var model = sequelize.define('archive', {
+    var model = sequelize.define('FileData', {
         id: {
             type: DataTypes.STRING(40),
             primaryKey: true
         },
         content_type: {
             type: DataTypes.STRING(100)
-        },
-        path: {
-            type: DataTypes.STRING()
         },
         size: {
             type: DataTypes.INTEGER
@@ -23,26 +20,33 @@ module.exports = function(sequelize, DataTypes) {
         },
         height:{
             type: DataTypes.INTEGER
-        },
-        original:{
-            type: DataTypes.STRING(40)
         }
     }, {
         timestamps: true,
         underscored: true,
-        tableName: "archive",
+        tableName: "file_data",
         instanceMethods: {
             toJSON: function() {
                 var json = {
                     id: this.id,
                     content_type: this.content_type,
-                    path: this.path,
                     size: this.size
                 };
                 if (this.width>0) { json.width = this.width };
                 if (this.height>0) { json.height = this.height };
-                if (this.original) { json.original = this.original };
                 return json;
+            }
+        },
+        classMethods: {
+            associate: function(models) {
+                model.belongsToMany(models.FilePath, {
+                    through: {
+                        model: models.FilePathData,
+                        unique: models.FilePathData
+                    },
+                    foreignKey: 'file_data_id',
+                    constraints: false
+                });
             }
         }
     });

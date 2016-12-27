@@ -23,10 +23,6 @@ var fileController = {
                 "path": request.payload.path,
             };
 
-            if (request.payload.scale) {
-                meta["scale"]= request.payload.scale
-            }
-
             logger.info("headers: ", JSON.stringify(data.file.hapi.headers));
 
             fileService.store(data.file, meta, function (data) {

@@ -3,7 +3,7 @@ services:
   web:
     image: "dynamicflow/staticache:latest"
     ports:
-      - "8080/tcp"
+      - "8080:8080/tcp"
     volumes:
       - storage-data:/var/lib/staticache
     environment:
