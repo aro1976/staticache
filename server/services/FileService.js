@@ -65,18 +65,8 @@ exports.store = function(origin, meta, replyStore) {
                     path: meta['path']
                 }
             }).spread(function (filePath, created) {
-                if (!created) {
-                    filePath.getFileData().then(function (fdatas) {
-                        fdatas.forEach(function (f) {
-                            if (f.id !== fileData.id) {
-                                logger.debug("removing %s, from %s", f.id, filePath.id);
-                                filePath.removeFileData(f);
-                            }
-                        });
-                    });
-                }
                 logger.debug("associating: %s to %s", filePath.path, fileData.id);
-                filePath.addFileData(fileData);
+                filePath.setFileData(fileData);
 
                 return replyStore(meta);
             });

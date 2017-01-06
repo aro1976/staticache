@@ -33,18 +33,18 @@ var fileController = {
     },
     fetchFile: function (request, reply) {
         logger.info("fetching file", request.params.id);
-        db.Archive.findById(request.params.id)
-            .then(function(archive) {
-                logger.debug("found",JSON.stringify(archive));
-                if (archive) {
-                    let path = fileService.convertIdToPath(archive.id);
+        db.FileData.findById(request.params.id)
+            .then(function(fileData) {
+                logger.debug("found",JSON.stringify(fileData));
+                if (fileData) {
+                    let path = fileService.convertIdToPath(fileData.id);
                     logger.debug("replying", path);
                     let file = fs.createReadStream(path);
 
                     reply(file)
-                        .type(archive.content_type)
-                        .etag(archive.id.slice(0,8))
-                        .bytes(archive.size);
+                        .type(fileData.content_type)
+                        .etag(fileData.id.slice(0,8))
+                        .bytes(fileData.size);
                 } else {
                     logger.info("not found");
                     return reply(boom.notFound());
@@ -62,19 +62,12 @@ var fileController = {
                 path: request.params.path,
             }
         };
-        if (typeof request.query.scale !== 'undefined') {
-            var res = request.query.scale.match(/(\d{1,4})[x|X](\d{1,4})/);
-            whereClause.where["width"]=res[1];
-            whereClause.where["height"]=res[2];
-        } else {
-            whereClause.where["original"]=null;
-        }
-        db.Archive.findOne(whereClause)
-            .then(function(archive) {
-                logger.debug("found",JSON.stringify(archive));
-                if (archive) {
+        db.FilePath.findOne(whereClause)
+            .then(function(filePath) {
+                logger.debug("found",JSON.stringify(filePath));
+                if (filePath) {
                     reply()
-                        .redirect("/cache/"+archive.id);
+                        .redirect("/cache/"+filePath.file_data_id);
                 } else {
                     logger.error("not found");
                     return reply(boom.notFound());

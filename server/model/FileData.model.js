@@ -37,18 +37,14 @@ module.exports = function(sequelize, DataTypes) {
                 return json;
             }
         },
-        classMethods: {
-            associate: function(models) {
-                model.belongsToMany(models.FilePath, {
-                    through: {
-                        model: models.FilePathData,
-                        unique: models.FilePathData
-                    },
-                    foreignKey: 'file_data_id',
-                    constraints: false
-                });
-            }
-        }
+        // classMethods: {
+        //     associate: function(models) {
+        //         model.hasMany(models.FilePath, {
+        //             foreignKey: 'file_data_id',
+        //             constraints: false
+        //         });
+        //     }
+        // }
     });
 
     return model;
