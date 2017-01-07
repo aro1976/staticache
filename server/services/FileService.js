@@ -62,12 +62,12 @@ exports.store = function(origin, meta, replyStore) {
 
             db.FilePath.findOrCreate({
                 where: {
-                    path: meta['path']
+                    path: meta['path'],
                 }
             }).spread(function (filePath, created) {
                 logger.debug("associating: %s to %s", filePath.path, fileData.id);
                 filePath.setFileData(fileData);
-
+                filePath.save();
                 return replyStore(meta);
             });
 

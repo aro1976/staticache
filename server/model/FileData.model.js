@@ -35,6 +35,9 @@ module.exports = function(sequelize, DataTypes) {
                 if (this.width>0) { json.width = this.width };
                 if (this.height>0) { json.height = this.height };
                 return json;
+            },
+            toEtag: function() {
+                return this.id.slice(0,8)
             }
         },
         // classMethods: {

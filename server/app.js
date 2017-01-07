@@ -37,15 +37,17 @@ server.route({
     method: 'POST',
     path: '/cache',
     config: {
-
         payload: {
             output: 'stream',
             parse: true,
             allow: 'multipart/form-data',
-            maxBytes: 50 * 1048576
+            maxBytes: 100 * 1048576
         },
-
-        handler: fileController.createFile
+        handler: fileController.createFile,
+        state: {
+            parse: false, // parse and store in request.state
+            failAction: 'ignore' // may also be 'ignore' or 'log'
+        }
     }
 });
 
@@ -62,6 +64,11 @@ server.route({
         cache: {
             expiresIn: 365 * 24 * 60 * 60 * 1000,
             privacy: 'public'
+
+        },
+        state: {
+            parse: false, // parse and store in request.state
+            failAction: 'ignore' // may also be 'ignore' or 'log'
         }
     }
 });
@@ -77,6 +84,10 @@ server.route({
             }
         },
         handler: fileController.searchAndRedirect,
+        state: {
+            parse: false, // parse and store in request.state
+            failAction: 'ignore' // may also be 'ignore' or 'log'
+        }
     }
 });
 
@@ -84,11 +95,14 @@ server.route({
     method: 'GET',
     path: '/check',
     config: {
-        handler: checkController.check
+        handler: checkController.check,
+        state: {
+            parse: false, // parse and store in request.state
+            failAction: 'ignore' // may also be 'ignore' or 'log'
+        }
     }
 });
 
 server.start(function () {
     logger.info('info', 'Server running at: ' + server.info.uri);
 });
-

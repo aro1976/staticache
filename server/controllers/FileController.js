@@ -43,7 +43,7 @@ var fileController = {
 
                     reply(file)
                         .type(fileData.content_type)
-                        .etag(fileData.id.slice(0,8))
+                        .etag(fileData.id.toEtag)
                         .bytes(fileData.size);
                 } else {
                     logger.info("not found");
@@ -56,7 +56,7 @@ var fileController = {
             });
     },
     searchAndRedirect: function (request, reply) {
-        logger.info("searching file", request.params.path, request.query.scale);
+        logger.info("searching file", request.params.path);
         var whereClause = {
             where: {
                 path: request.params.path,
@@ -66,8 +66,42 @@ var fileController = {
             .then(function(filePath) {
                 logger.debug("found",JSON.stringify(filePath));
                 if (filePath) {
-                    reply()
-                        .redirect("/cache/"+filePath.file_data_id);
+                    if (filePath.path.match(/\.(js|css|htm|html)/)) {
+                        // check etag
+                        var reqEtag = request.headers['if-none-match'] ? request.headers['if-none-match'].slice(1,9) : null;
+                        logger.debug("match etag:",filePath.toEtag(), reqEtag, filePath.toEtag()==reqEtag);
+
+                        if (reqEtag) {
+                            //not modified
+                            reply().code(304);
+                        } else {
+                            db.FileData.findById(filePath.file_data_id)
+                                .then(function(fileData) {
+                                    if (fileData) {
+                                        let path = fileService.convertIdToPath(fileData.id);
+                                        logger.debug("replying", path);
+                                        let file = fs.createReadStream(path);
+
+                                        reply(file)
+                                            .type(fileData.content_type)
+                                            .etag(fileData.toEtag())
+                                            .bytes(fileData.size);
+                                    } else {
+                                        logger.info("not found");
+                                        return reply(boom.notFound());
+                                    }
+                                })
+                                .catch(function(err) {
+                                    logger.error('fetching error ', err);
+                                    return reply(boom.internal("cannot fetch file"));
+                                });
+                        }
+
+                    } else {
+                        reply()
+                            .redirect("/cache/"+filePath.file_data_id);
+                    }
+
                 } else {
                     logger.error("not found");
                     return reply(boom.notFound());

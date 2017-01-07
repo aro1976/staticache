@@ -34,7 +34,12 @@ module.exports = function(sequelize, DataTypes) {
                 method: 'BTREE',
                 fields: ['file_data_id']
             }
-        ]
+        ],
+        instanceMethods: {
+            toEtag: function() {
+                return this.file_data_id.slice(0,8)
+            }
+        }
     });
 
     return model;
