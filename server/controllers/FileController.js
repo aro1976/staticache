@@ -43,7 +43,7 @@ var fileController = {
 
                     reply(file)
                         .type(fileData.content_type)
-                        .etag(fileData.id.toEtag)
+                        .etag(fileData.toEtag())
                         .bytes(fileData.size);
                 } else {
                     logger.info("not found");
